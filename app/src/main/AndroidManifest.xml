@@ -26,6 +26,9 @@
         <activity
             android:name=".views.HomeActivity">
         </activity>
+        <activity
+            android:name=".views.DetailActivity">
+        </activity>
     </application>
 
 </manifest>

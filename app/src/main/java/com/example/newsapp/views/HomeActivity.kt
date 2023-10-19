@@ -1,8 +1,10 @@
 package com.example.newsapp.views
 
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -24,7 +26,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import kotlin.math.log
+import com.example.newsapp.util.Utility
 
 
 class HomeActivity : AppCompatActivity() {
@@ -33,7 +35,8 @@ class HomeActivity : AppCompatActivity() {
 
     private lateinit var newRecyclerView: RecyclerView
     private lateinit var newArrayList : ArrayList<News>
-    private lateinit var articleResponse : ArrayList<News>
+    lateinit var news : ArrayList<News>
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,7 +46,7 @@ class HomeActivity : AppCompatActivity() {
 
         var imageList = ArrayList<SlideModel>()
 
-        for (i in 0 .. 3) {
+        for (i in 0 .. 4) {
             imageList.add(
                 SlideModel(
                     "https://matrixread.com/wp-content/uploads/2020/10/loading-placeholder.png.webp",
@@ -60,58 +63,94 @@ class HomeActivity : AppCompatActivity() {
         newRecyclerView.setHasFixedSize(true)
 
         newArrayList = arrayListOf<News>()
-
-
         lifecycleScope.launch {
 
-            val newsData = getNewsData()
-            while (newsData.size == 0){
-                delay(1000L)
-            }
-            try{
-                for (i in 0 until 4) {
+            getNewsData()
+            try {
+                while (newArrayList.size == 0){
+                    delay(1000L)
+                }
+
+                //lewatin gambar yg null
+                var x = 0
+                var i = 0
+                while (x < 4){
+                    if (newArrayList[i+x].urlToImage != null){
                     imageList[i] = SlideModel(
-                        newsData[i].urlToImage,  // Use the URL from the response if available
-                        newsData[i].title,
+                        newArrayList[i+x].urlToImage,  // Use the URL from the response if available
+                        newArrayList[i+x].title,
                         ScaleTypes.CENTER_CROP
                     )
+                        x += 1
+                    }else{
+                        i += 1
+                    }
+
                 }
-            }
-            catch (e : Exception){
+
+
+                imageSlider.setImageList(imageList)
+            }catch (e : Exception){
                 Log.i(TAG, "${e}")
             }
 
-            imageSlider.setImageList(imageList)
         }
 
 
     }
 
-    private suspend fun getNewsData() : List<News> {
-        val api = Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(ApiService::class.java)
+    private suspend fun getNewsData() {
+        try {
+            val api = Retrofit.Builder()
+                .baseUrl(BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+                .create(ApiService::class.java)
 
-        api.getNews().enqueue(object : Callback<Response>{
-            override fun onResponse(call: Call<Response>, response: retrofit2.Response<Response>) {
-                response.body()?.let {
-                    for (article in it.articles){
-                        newArrayList.add(article)
+            api.getNews().enqueue(object : Callback<Response> {
+                override fun onResponse(
+                    call: Call<Response>,
+                    response: retrofit2.Response<Response>
+                ) {
+                    response.body()?.let {
+                        val util = Utility()
+                        for (article in it.articles) {
+                            var tempArticle = article;
+                            tempArticle.publishedAt = util.convretTime(tempArticle.publishedAt)
+                            newArrayList.add(article)
+                        }
                     }
                 }
-            }
 
 
-            override fun onFailure(call: Call<Response>, t: Throwable) {
-                Log.i(TAG, "FAILURE")
-            }
+                override fun onFailure(call: Call<Response>, t: Throwable) {
+                    Log.i(TAG, "FAILURE")
+                }
 
-        })
+            })
+            var adapter = NewsAdapter(newArrayList)
+            newRecyclerView.adapter = adapter
+            adapter.setOnItemClickerListener(object : NewsAdapter.onItemClickerListener {
+                override fun onItemClick(position: Int) {
+                    Toast.makeText(
+                        this@HomeActivity,
+                        "${newArrayList[position].title}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                val intent = Intent(this@HomeActivity, DetailActivity::class.java)
+                intent.putExtra("titleNews",  newArrayList[position].title )
+                intent.putExtra("source",  newArrayList[position].source.name )
+                intent.putExtra("date",  newArrayList[position].publishedAt )
+                intent.putExtra("url_img",  newArrayList[position].urlToImage )
+                intent.putExtra("content",  newArrayList[position].content )
+                intent.putExtra("url_article",  newArrayList[position].url )
+                startActivity(intent)
+                }
+            })
+        }catch (e: Exception){
+            Log.i(TAG,"${e}")
+        }
 
-        newRecyclerView.adapter = NewsAdapter(newArrayList)
-        return newArrayList;
     }
 
 }
