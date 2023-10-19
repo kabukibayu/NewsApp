@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <androidx.core.widget.NestedScrollView
+        android:fillViewport="true"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <Space
+                android:id="@+id/space"
+                android:layout_width="match_parent"
+                android:layout_height="16dp" />
+
+
+            <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/search_bar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/space"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:background="@drawable/rounded_border"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp">
+
+                <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:paddingStart="8dp"
+                        android:paddingEnd="8dp"
+                        android:src="@drawable/ic_search" />
+
+                    <EditText
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:hint="Search News"
+                        android:inputType="text"
+                        android:textSize="16sp" />
+
+                </LinearLayout>
+            </FrameLayout>
+
+            <Space
+                android:id="@+id/space_2"
+                android:layout_width="match_parent"
+                android:layout_height="16dp"
+                android:layout_below="@id/search_bar" />
+
+            <TextView
+                android:id="@+id/text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/space_2"
+                android:layout_marginStart="16dp"
+                android:fontFamily="@font/roboto_font"
+                android:text="Top headlines in the US"
+                android:textFontWeight="700"
+                android:textSize="20sp" />
+
+            <Space
+                android:id="@+id/space_3"
+                android:layout_width="match_parent"
+                android:layout_height="16dp"
+                android:layout_below="@id/text" />
+
+            <com.denzcoskun.imageslider.ImageSlider
+                android:id="@+id/image_slider"
+                android:layout_width="wrap_content"
+                android:layout_height="300dp"
+                android:layout_below="@id/space_3"
+                app:iss_auto_cycle="true"
+                app:iss_delay="5000"
+                app:iss_period="5000"
+                app:iss_text_align="CENTER" />
+
+
+            <Space
+                android:id="@+id/space_4"
+                android:layout_width="match_parent"
+                android:layout_height="16dp"
+                android:layout_below="@id/image_slider" />
+
+            <TextView
+                android:id="@+id/text2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/space_4"
+                android:layout_marginStart="16dp"
+                android:fontFamily="@font/roboto_font"
+                android:text="Other recent news"
+                android:textFontWeight="700"
+                android:textSize="20sp" />
+
+            <Space
+                android:id="@+id/space_5"
+                android:layout_width="match_parent"
+                android:layout_height="16dp"
+                android:layout_below="@id/text2" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycleid"
+                android:layout_below="@id/space_5"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
+        </androidx.appcompat.widget.LinearLayoutCompat>
+    </androidx.core.widget.NestedScrollView>
+</RelativeLayout>
+
