@@ -86,7 +86,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:layout_marginStart="16dp"
-        android:text="Visit our website"
+        android:text="Visit website"
         android:layout_below="@id/content"
         android:clickable="true"
         android:textColor="@color/light_blue_600" />
