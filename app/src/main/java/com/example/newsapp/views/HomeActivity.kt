@@ -3,7 +3,14 @@ package com.example.newsapp.views
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
+import android.view.Menu
+import android.view.View
+import android.widget.EditText
+import android.widget.RelativeLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -14,6 +21,7 @@ import com.example.newsapp.R
 import com.denzcoskun.imageslider.models.SlideModel
 import com.denzcoskun.imageslider.ImageSlider
 import com.denzcoskun.imageslider.constants.ScaleTypes
+import com.denzcoskun.imageslider.interfaces.ItemClickListener
 import com.example.newsapp.adapter.NewsAdapter
 
 import com.example.newsapp.model.News
@@ -27,6 +35,7 @@ import retrofit2.Callback
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import com.example.newsapp.util.Utility
+import java.util.Locale
 
 
 class HomeActivity : AppCompatActivity() {
@@ -35,7 +44,7 @@ class HomeActivity : AppCompatActivity() {
 
     private lateinit var newRecyclerView: RecyclerView
     private lateinit var newArrayList : ArrayList<News>
-    lateinit var news : ArrayList<News>
+    private lateinit var tempArrayList: ArrayList<News>
 
 
 
@@ -43,6 +52,52 @@ class HomeActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_home)
+        val searchNews : EditText = findViewById(R.id.searchNews)
+        val text1 : TextView = findViewById(R.id.text)
+        val text2 : TextView = findViewById(R.id.text2)
+        val imageSlider : ImageSlider = findViewById(R.id.image_slider)
+        newRecyclerView = findViewById(R.id.recycleid)
+        var layoutPos = newRecyclerView.layoutParams as RelativeLayout.LayoutParams
+
+        searchNews.addTextChangedListener(object :TextWatcher{
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+            }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                var searchText : String = s.toString()
+                Log.i(TAG, searchText)
+                Toast.makeText(this@HomeActivity,searchText, Toast.LENGTH_SHORT)
+                if(searchText.isNotEmpty()){
+                    tempArrayList.clear()
+                    newArrayList.forEach{
+                        if (it.title.lowercase(Locale.getDefault()).contains(searchText)){
+                            Log.i(TAG, it.title.lowercase(Locale.getDefault()))
+                            tempArrayList.add(it)
+                        }
+                    }
+                    text1.visibility = View.GONE
+                    text2.visibility = View.GONE
+                    imageSlider.visibility = View.GONE
+                    layoutPos.addRule(RelativeLayout.BELOW, R.id.space_3)
+                    newRecyclerView.layoutParams = layoutPos
+                    newRecyclerView.adapter!!.notifyDataSetChanged()
+                }else{
+                    tempArrayList.clear()
+                    tempArrayList.addAll(newArrayList)
+                    text1.visibility = View.VISIBLE
+                    text2.visibility = View.VISIBLE
+                    imageSlider.visibility = View.VISIBLE
+                    layoutPos.addRule(RelativeLayout.BELOW, R.id.space_5)
+                    newRecyclerView.layoutParams = layoutPos
+                    newRecyclerView.adapter!!.notifyDataSetChanged()
+                }
+            }
+
+            override fun afterTextChanged(s: Editable?) {
+
+
+            }
+        })
 
         var imageList = ArrayList<SlideModel>()
 
@@ -55,14 +110,15 @@ class HomeActivity : AppCompatActivity() {
                 )
             )
         }
-        val imageSlider = findViewById<ImageSlider>(R.id.image_slider)
+
         imageSlider.setImageList(imageList)
 
-        newRecyclerView = findViewById(R.id.recycleid)
+
         newRecyclerView.layoutManager = LinearLayoutManager(this)
         newRecyclerView.setHasFixedSize(true)
 
         newArrayList = arrayListOf<News>()
+        tempArrayList = arrayListOf<News>()
         lifecycleScope.launch {
 
             getNewsData()
@@ -71,25 +127,27 @@ class HomeActivity : AppCompatActivity() {
                     delay(1000L)
                 }
 
-                //lewatin gambar yg null
-                var x = 0
-                var i = 0
-                while (x < 4){
-                    if (newArrayList[i+x].urlToImage != null){
+                for (i in 0 .. 4){
                     imageList[i] = SlideModel(
-                        newArrayList[i+x].urlToImage,  // Use the URL from the response if available
-                        newArrayList[i+x].title,
+                        newArrayList[i].urlToImage ?: "@drawable/error" ,  // Use the URL from the response if available
+                        newArrayList[i].title,
                         ScaleTypes.CENTER_CROP
-                    )
-                        x += 1
-                    }else{
-                        i += 1
-                    }
 
+                        )
                 }
 
 
+
                 imageSlider.setImageList(imageList)
+                imageSlider.setItemClickListener(object : ItemClickListener {
+                    override fun doubleClick(position: Int) {
+                    }
+
+                    override fun onItemSelected(position: Int) {
+                        goToDetailSlider(position)
+                    }
+                })
+
             }catch (e : Exception){
                 Log.i(TAG, "${e}")
             }
@@ -119,38 +177,49 @@ class HomeActivity : AppCompatActivity() {
                             tempArticle.publishedAt = util.convretTime(tempArticle.publishedAt)
                             newArrayList.add(article)
                         }
+                        tempArrayList.addAll(newArrayList)
                     }
                 }
-
-
                 override fun onFailure(call: Call<Response>, t: Throwable) {
                     Log.i(TAG, "FAILURE")
                 }
 
             })
-            var adapter = NewsAdapter(newArrayList)
+
+
+
+            var adapter = NewsAdapter(tempArrayList)
             newRecyclerView.adapter = adapter
             adapter.setOnItemClickerListener(object : NewsAdapter.onItemClickerListener {
                 override fun onItemClick(position: Int) {
-                    Toast.makeText(
-                        this@HomeActivity,
-                        "${newArrayList[position].title}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                val intent = Intent(this@HomeActivity, DetailActivity::class.java)
-                intent.putExtra("titleNews",  newArrayList[position].title )
-                intent.putExtra("source",  newArrayList[position].source.name )
-                intent.putExtra("date",  newArrayList[position].publishedAt )
-                intent.putExtra("url_img",  newArrayList[position].urlToImage )
-                intent.putExtra("content",  newArrayList[position].content )
-                intent.putExtra("url_article",  newArrayList[position].url )
-                startActivity(intent)
+                    goToDetail(position)
                 }
             })
         }catch (e: Exception){
             Log.i(TAG,"${e}")
         }
 
+    }
+
+    fun goToDetail(position : Int){
+        val intent = Intent(this@HomeActivity, DetailActivity::class.java)
+        intent.putExtra("titleNews",  tempArrayList[position].title )
+        intent.putExtra("source",  tempArrayList[position].source.name )
+        intent.putExtra("date",  tempArrayList[position].publishedAt )
+        intent.putExtra("url_img",  tempArrayList[position].urlToImage )
+        intent.putExtra("content",  tempArrayList[position].content )
+        intent.putExtra("url_article",  tempArrayList[position].url )
+        startActivity(intent)
+    }
+    fun goToDetailSlider(position : Int){
+        val intent = Intent(this@HomeActivity, DetailActivity::class.java)
+        intent.putExtra("titleNews",  newArrayList[position].title )
+        intent.putExtra("source",  newArrayList[position].source.name )
+        intent.putExtra("date",  newArrayList[position].publishedAt )
+        intent.putExtra("url_img",  newArrayList[position].urlToImage )
+        intent.putExtra("content",  newArrayList[position].content )
+        intent.putExtra("url_article",  newArrayList[position].url )
+        startActivity(intent)
     }
 
 }
